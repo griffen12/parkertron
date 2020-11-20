@@ -1,15 +1,22 @@
-package main
+package discord
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/parkervcp/parkertron/pkg/config"
+
+	"github.com/sirupsen/logrus"
+
 	"github.com/bwmarrin/discordgo"
 	"mvdan.cc/xurls/v2"
 )
 
 var (
+	// Log is a logrus logger
+	Log *logrus.Logger
+
 	stopDiscordServer    = make(chan string)
 	discordServerStopped = make(chan string)
 
@@ -60,21 +67,21 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 
 	// get all the configs
 	// requires channel info we get from the channel info above
-	prefix := getPrefix("discord", botName, channel.GuildID)
-	channelCommands := getCommands("discord", botName, channel.GuildID, m.ChannelID)
-	channelKeywords := getKeywords("discord", botName, channel.GuildID, m.ChannelID)
-	channelParsing := getParsing("discord", botName, channel.GuildID, m.ChannelID)
-	serverFilter := getFilter("discord", botName, channel.GuildID)
+	prefix := config.GetPrefix("discord", botName, channel.GuildID)
+	channelCommands := config.GetCommands("discord", botName, channel.GuildID, m.ChannelID)
+	channelKeywords := config.GetKeywords("discord", botName, channel.GuildID, m.ChannelID)
+	channelParsing := config.GetParsing("discord", botName, channel.GuildID, m.ChannelID)
+	serverFilter := config.GetFilter("discord", botName, channel.GuildID)
 
 	Log.Debugf("prefix: %s", prefix)
 
 	// bot level configs for log reading
-	maxLogs, logResponse, logReaction, allowIP := getBotParseConfig()
+	maxLogs, logResponse, logReaction, allowIP := config.GetBotParseConfig()
 
 	// if the channel is a DM
 	if channel.Type == 1 {
-		_, dmResp := getMentions("discord", botName, channel.GuildID, "DirectMessage")
-		if err := sendDiscordMessage(dg, m.ChannelID, m.Author.ID, getPrefix("discord", botName, channel.GuildID), dmResp.Reaction); err != nil {
+		_, dmResp := config.GetMentions("discord", botName, channel.GuildID, "DirectMessage")
+		if err := sendDiscordMessage(dg, m.ChannelID, m.Author.ID, config.GetPrefix("discord", botName, channel.GuildID), dmResp.Reaction); err != nil {
 			Log.Error(err)
 		}
 
@@ -111,7 +118,7 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 
 	// if the channel isn't in a group drop the message
 	Log.Debugf("checking channels")
-	if !contains(getChannels("discord", botName, channel.GuildID), m.ChannelID) {
+	if !main.contains(config.getChannels("discord", botName, channel.GuildID), m.ChannelID) {
 		Log.Debugf("channel not found")
 		return
 	}
@@ -119,7 +126,7 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 	Log.Debugf("checking blacklist")
 
 	// drop messages from blacklisted users
-	for _, user := range getBlacklist("discord", botName, channel.GuildID, m.ChannelID) {
+	for _, user := range config.getBlacklist("discord", botName, channel.GuildID, m.ChannelID) {
 		if user == m.Author.ID {
 			Log.Debugf("user %s is blacklisted username is %s", m.Author.ID, m.Author.Username)
 			return
@@ -193,7 +200,7 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 	// Log.Debug(allURLS)
 	Log.Debugf("checking mentions")
 	if len(m.Mentions) != 0 {
-		ping, mention := getMentions("discord", botName, channel.GuildID, m.ChannelID)
+		ping, mention := config.getMentions("discord", botName, channel.GuildID, m.ChannelID)
 		if m.Mentions[0].ID == bot.ID && strings.Replace(m.Content, "<@!"+dg.State.User.ID+">", "", -1) == "" {
 			Log.Debugf("bot was pinged")
 			response = ping.Response
@@ -211,9 +218,9 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 		Log.Debugf("no mentions found")
 		if strings.HasPrefix(m.Content, prefix) {
 			// command
-			response, reaction = parseCommand(strings.TrimPrefix(m.Content, prefix), botName, channelCommands)
+			response, reaction = main.parseCommand(strings.TrimPrefix(m.Content, prefix), botName, channelCommands)
 			// if the flag for clearing commands is set and there is a response
-			if getCommandClear("discord", botName, channel.GuildID) && len(response) > 0 {
+			if config.getCommandClear("discord", botName, channel.GuildID) && len(response) > 0 {
 				Log.Debugf("removing command message %s", m.ID)
 				if err := deleteDiscordMessage(dg, m.ChannelID, m.ID, ""); err != nil {
 					Log.Error(err)
@@ -223,7 +230,7 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 			}
 		} else {
 			// keyword
-			response, reaction = parseKeyword(m.Content, botName, channelKeywords, channelParsing)
+			response, reaction = main.parseKeyword(m.Content, botName, channelKeywords, channelParsing)
 		}
 	}
 
@@ -255,13 +262,13 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 			Log.Debugf("reading all attachments and logs")
 			allParsed := make(map[string]string)
 			for _, url := range allURLS {
-				allParsed[url] = parseURL(url, channelParsing)
+				allParsed[url] = main.parseURL(url, channelParsing)
 			}
 
 			//parse logs and append to current response.
 			for _, url := range allURLS {
 				Log.Debugf("passing %s to keyword parser", url)
-				urlResponse, _ := parseKeyword(allParsed[url], botName, channelKeywords, channelParsing)
+				urlResponse, _ := main.parseKeyword(allParsed[url], botName, channelKeywords, channelParsing)
 				Log.Debugf("response length = %d", len(urlResponse))
 				if len(urlResponse) == 1 && urlResponse[0] == "" || len(urlResponse) == 0 {
 
@@ -443,7 +450,7 @@ func sendDiscordEmbed(dg *discordgo.Session, channelID string, embed *discordgo.
 
 // service handling
 // start all the bots
-func startDiscordsBots() {
+func StartBots() {
 	Log.Infof("Starting discord server connections\n")
 	// range over the bots available to start
 	for _, bot := range discordGlobal.Bots {
@@ -463,7 +470,7 @@ func startDiscordsBots() {
 }
 
 // when a shutdown is sent close out services properly
-func stopDiscordBots() {
+func StopBots() {
 	Log.Infof("stopping discord connections")
 	// loop through bots and send shutdowns
 	for _, bot := range discordGlobal.Bots {

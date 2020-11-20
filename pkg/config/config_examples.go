@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"log"
@@ -84,12 +84,12 @@ func createExampleDiscordConfig(confDir string) (err error) {
 		return
 	}
 
-	newDiscordBot := discordBot{}
+	newDiscordBot := main.discordBot{}
 
-	newDiscordBotConfig := discordBotConfig{
+	newDiscordBotConfig := main.discordBotConfig{
 		Token: "An example token",
 		Game:  "Supporting Humans",
-		DMResp: responseArray{
+		DMResp: main.responseArray{
 			Response: []string{""},
 			Reaction: []string{""},
 		},
@@ -109,67 +109,67 @@ func createExampleDiscordConfig(confDir string) (err error) {
 		return
 	}
 
-	newServer := discordServer{
+	newServer := main.discordServer{
 		ServerID: "a-server-id",
-		Config: discordServerConfig{
+		Config: main.discordServerConfig{
 			Prefix: ".",
 			Clear:  true,
 		},
-		ChanGroups: []channelGroup{
+		ChanGroups: []main.channelGroup{
 			{
 				ChannelIDs: []string{
 					"a-channel-id",
 					"another-channel-id",
 				},
-				Mentions: mentions{
-					Ping: responseArray{
+				Mentions: main.mentions{
+					Ping: main.responseArray{
 						Reaction: []string{"👋"},
 						Response: []string{"I see I was pinged.", "Please just post the issue you are having", " Or you can gather your logs and post them"},
 					},
-					Mention: responseArray{
+					Mention: main.responseArray{
 						Reaction: []string{"👋"},
 						Response: []string{""},
 					},
 				},
-				Commands: []command{
+				Commands: []main.command{
 					{
 						Command:  "example",
 						Response: []string{"This is the response to the &prefix&example command"},
 					},
 				},
-				Keywords: []keyword{
+				Keywords: []main.keyword{
 					{
 						Keyword:  "example",
 						Reaction: []string{""},
 						Response: []string{"I have responded to seeing the word example."},
 					},
 				},
-				Parsing: parsing{
-					Image: parsingImageConfig{
+				Parsing: main.parsing{
+					Image: main.parsingImageConfig{
 						FileTypes: []string{
 							"png",
 							"jpg"},
-						Sites:     []parsingConfig{
+						Sites: []main.parsingConfig{
 							{
-								Name: "pastebin",
-								URL: "'https://pastebin.com/'",
+								Name:   "pastebin",
+								URL:    "'https://pastebin.com/'",
 								Format: "'https://pastebin.com/raw/&filename&'",
 							},
 							{
-								Name: "hastebin",
-								URL: "'https://hastebin.com/'",
+								Name:   "hastebin",
+								URL:    "'https://hastebin.com/'",
 								Format: "'https://hastebin.com/raw/&filename&'",
 							},
 						},
 					},
-					Paste: parsingPasteConfig{
-						Sites: []parsingConfig{},
+					Paste: main.parsingPasteConfig{
+						Sites: []main.parsingConfig{},
 					},
 				},
-				KOM: discordKickOnMention{},
+				KOM: main.discordKickOnMention{},
 			},
 		},
-		Permissions: []permission{
+		Permissions: []main.permission{
 			{
 				Group:       "admin",
 				Users:       []string{},
@@ -177,7 +177,7 @@ func createExampleDiscordConfig(confDir string) (err error) {
 				Blacklisted: false,
 			},
 		},
-		Filters: []filter{
+		Filters: []main.filter{
 			{
 				Term: "a bad word",
 				Reason: []string{
@@ -214,9 +214,9 @@ func createExampleIRCConfig(confDir string) (err error) {
 		return
 	}
 
-	newIrc := ircBot{
-		Config: ircBotConfig{
-			Server: ircServerConfig{
+	newIrc := main.ircBot{
+		Config: main.ircBotConfig{
+			Server: main.ircServerConfig{
 				Address:   "irc.freenode.net",
 				Port:      6667,
 				SSLEnable: true,
@@ -225,48 +225,48 @@ func createExampleIRCConfig(confDir string) (err error) {
 				Nickname:  "parkertron",
 				RealName:  "Parker McBot",
 			},
-			DMResp: responseArray{
+			DMResp: main.responseArray{
 				Response: []string{},
 			},
 			Prefix: ".",
 		},
-		ChanGroups: []channelGroup{
+		ChanGroups: []main.channelGroup{
 			{
 				ChannelIDs: []string{
 					"a-channel-name",
 					"another-channel-name",
 				},
-				Mentions: mentions{
-					Ping: responseArray{
+				Mentions: main.mentions{
+					Ping: main.responseArray{
 						Response: []string{},
 					},
-					Mention: responseArray{
+					Mention: main.responseArray{
 						Response: []string{},
 					},
 				},
-				Commands: []command{
+				Commands: []main.command{
 					{
 						Command:  "example",
 						Reaction: []string{""},
 						Response: []string{"This is the response to the &prefix&example command"},
 					},
 				},
-				Keywords: []keyword{
+				Keywords: []main.keyword{
 					{
 						Keyword:  "example",
 						Response: []string{"I have responded to seeing the word example."},
 					},
 				},
-				Parsing: parsing{
-					Image: parsingImageConfig{
+				Parsing: main.parsing{
+					Image: main.parsingImageConfig{
 						FileTypes: []string{},
-						Sites:     []parsingConfig{},
+						Sites:     []main.parsingConfig{},
 					},
-					Paste: parsingPasteConfig{
-						Sites: []parsingConfig{},
+					Paste: main.parsingPasteConfig{
+						Sites: []main.parsingConfig{},
 					},
 				},
-				Permissions: []permission{
+				Permissions: []main.permission{
 					{
 						Group:       "admin",
 						Users:       []string{},

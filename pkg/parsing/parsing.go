@@ -1,4 +1,4 @@
-package main
+package parsing
 
 import (
 	"image"
@@ -10,8 +10,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/h2non/filetype"
 	"github.com/otiai10/gosseract"
+)
+
+var (
+	// Log is a logrus logger
+	Log *logrus.Logger
 )
 
 func parseImage(remoteURL string) (imageText string, err error) {
@@ -117,11 +124,11 @@ func parseBin(url, format string) (binText string, err error) {
 }
 
 // parses url contents for images and paste sites.
-func parseURL(url string, parseConf parsing) (parsedText string) {
+func ParseURL(url string, parseConf parsing) (parsedText string) {
 	//Catch domains and route to the proper controllers (image, binsite parsers)
 	Log.Debugf("checking for pastes and images on %s\n", url)
 	// if a url ends with a / remove it. Stupid chrome adds them.
-	if strings.HasSuffix(url,"/") {
+	if strings.HasSuffix(url, "/") {
 		url = strings.TrimSuffix(url, "/")
 	}
 	if len(parseConf.Image.Sites) != 0 {
@@ -174,7 +181,7 @@ func parseURL(url string, parseConf parsing) (parsedText string) {
 //  	     /___/
 
 // returns response and reaction for keywords
-func parseKeyword(message, botName string, channelKeywords []keyword, parseConf parsing) (response, reaction []string) {
+func ParseKeyword(message, botName string, channelKeywords []keyword, parseConf parsing) (response, reaction []string) {
 	Log.Debugf("Parsing inbound chat for %s", botName)
 
 	message = strings.ToLower(message)
@@ -236,7 +243,7 @@ func modCommand(message, botName string, servCommands []command) (response, reac
 }
 
 // Command parses commands
-func parseCommand(message, botName string, channelCommands []command) (response, reaction []string) {
+func ParseCommand(message, botName string, channelCommands []command) (response, reaction []string) {
 	Log.Debugf("Parsing inbound command for %s", botName)
 	message = strings.ToLower(message)
 
@@ -250,7 +257,7 @@ func parseCommand(message, botName string, channelCommands []command) (response,
 }
 
 // general funcs
-func contains(array []string, str string) bool {
+func Contains(array []string, str string) bool {
 	for _, value := range array {
 		if value == str {
 			return true

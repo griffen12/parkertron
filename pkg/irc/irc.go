@@ -1,14 +1,22 @@
-package main
+package irc
 
 import (
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/parkervcp/parkertron/pkg/config"
+	"github.com/parkervcp/parkertron/pkg/parsing"
+
+	"github.com/sirupsen/logrus"
+
 	hirc "github.com/husio/irc"
 )
 
 var (
+	// Log is a logrus logger
+	Log *logrus.Logger
+
 	stopIRC = make(map[string](chan string))
 
 	ircGlobal irc
@@ -66,10 +74,10 @@ func ircMessageHandler(conn hirc.Conn, botName string) {
 		Log.Debug("messageIn: " + messageIn) // actual message
 
 		// get all the configs
-		prefix := getPrefix("irc", botName, botName)
-		channelCommands := getCommands("irc", botName, "", channel)
-		channelKeywords := getKeywords("irc", botName, "", channel)
-		channelParsing := getParsing("irc", botName, "", channel)
+		prefix := config.GetPrefix("irc", botName, botName)
+		channelCommands := config.GetCommands("irc", botName, "", channel)
+		channelKeywords := config.GetKeywords("irc", botName, "", channel)
+		channelParsing := config.GetParsing("irc", botName, "", channel)
 
 		if author == nickname {
 			Log.Debug("User is the bot and being ignored.")
@@ -77,7 +85,7 @@ func ircMessageHandler(conn hirc.Conn, botName string) {
 		}
 
 		// if the user nickname matches bot or blacklisted.
-		for _, user := range getBlacklist("discord", botName, "", channel) {
+		for _, user := range config.GetBlacklist("discord", botName, "", channel) {
 			if user == author {
 				Log.Debugf("user %s is blacklisted", author)
 				return
@@ -87,7 +95,7 @@ func ircMessageHandler(conn hirc.Conn, botName string) {
 		// if bot is DM'd
 		if channel == nickname {
 			Log.Debug("This was a DM")
-			_, mention := getMentions("irc", botName, "", channel)
+			_, mention := config.GetMentions("irc", botName, "", channel)
 			sendIRCMessage(conn, channel, author, prefix, mention.Response)
 			return
 		}
@@ -100,10 +108,10 @@ func ircMessageHandler(conn hirc.Conn, botName string) {
 
 			if !strings.HasPrefix(messageIn, prefix) {
 				Log.Debug("sending to \"" + channel)
-				parseKeyword(messageIn, botName, channelKeywords, channelParsing)
+				parsing.ParseKeyword(messageIn, botName, channelKeywords, channelParsing)
 			} else {
 				Log.Debug("sending to \"" + channel)
-				parseCommand(strings.TrimPrefix(messageIn, prefix), botName, channelCommands)
+				parsing.ParseCommand(strings.TrimPrefix(messageIn, prefix), botName, channelCommands)
 			}
 			return
 		}
@@ -144,7 +152,7 @@ func sendIRCMessage(conn hirc.Conn, channelName string, user string, prefix stri
 
 // service handling
 // start all the bots
-func startIRCBots() {
+func StartBots() {
 	Log.Infof("Starting IRC server connections\n")
 	// range over the bots available to start
 	for _, bot := range ircGlobal.Bots {
@@ -160,12 +168,13 @@ func startIRCBots() {
 	}
 
 	Log.Infof("irc service started\n")
+
 	// inform main process that the bot is started
-	servStart <- "irc_online"
+	return
 }
 
 // when a shutdown is sent close out services properly
-func stopIRCBots() {
+func StopBots() {
 	Log.Infof("stopping irc connections")
 	// loop through bots and send shutdowns
 	for _, bot := range ircGlobal.Bots {
@@ -181,7 +190,7 @@ func stopIRCBots() {
 
 	Log.Infof("irc connections stopped")
 	// return shutdown signal on channel
-	servStopped <- "irc_stopped"
+	return
 }
 
 // start connections to irc

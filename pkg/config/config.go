@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"encoding/json"
@@ -11,16 +11,24 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/goccy/go-yaml"
 )
 
 var (
+	// Log is a logrus logger
+	Log *logrus.Logger
+
 	// stores info on files for easier loading
 	files confFiles
 
 	// literally to make sure files load in order
 	fileLoad = make(chan string)
+
+	DiscordBots
+
 )
 
 type confFiles struct {
@@ -34,7 +42,7 @@ type confFile struct {
 	BotName  string // variable based on folder name
 }
 
-func initConfig(confDir string) (err error) {
+func InitConfig(confDir string) (err error) {
 	if err = loadConfDirs(confDir); err != nil {
 		return nil
 	}
@@ -85,8 +93,8 @@ func fileSort() (newFiles confFiles) {
 	return
 }
 
-func loadConfDirs(confdir string) (err error) {
-	cleanConfDir := path.Clean(confdir)
+func loadConfDirs(confDir string) (err error) {
+	cleanConfDir := path.Clean(confDir)
 
 	// Log.Debugf("reading from %s", cleanConfDir)
 	confFullPath, err := filepath.Abs(cleanConfDir)
@@ -250,10 +258,10 @@ func loadConf(conf confFile) (err error) {
 				Log.Error(err)
 				return
 			}
-			for bid, bot := range discordGlobal.Bots {
+			for bid, bot := range main.discordGlobal.Bots {
 				if bot.BotName == conf.BotName {
-					discordGlobal.Bots[bid].Config.Game = tempBot.Config.Game
-					discordGlobal.Bots[bid].Config.DMResp = tempBot.Config.DMResp
+					main.discordGlobal.Bots[bid].Config.Game = tempBot.Config.Game
+					main.discordGlobal.Bots[bid].Config.DMResp = tempBot.Config.DMResp
 					return
 				}
 			}
@@ -277,7 +285,7 @@ func loadConf(conf confFile) (err error) {
 
 			for bid, bot := range discordGlobal.Bots {
 				if bot.BotName == conf.BotName {
-					for sid, server := range discordGlobal.Bots[bid].Servers {
+					for sid, server := range main.discordGlobal.Bots[bid].Servers {
 						// if the server exists drop it and re-append config
 						if server.ServerID == tempServer.ServerID {
 							discordGlobal.Bots[bid].Servers[sid].ChanGroups = tempServer.ChanGroups
@@ -287,7 +295,7 @@ func loadConf(conf confFile) (err error) {
 						}
 					}
 					// if the server isn't in the list append it.
-					discordGlobal.Bots[bid].Servers = append(discordGlobal.Bots[bid].Servers, tempServer)
+					discordGlobal.Bots[bid].Servers = append(main.discordGlobal.Bots[bid].Servers, tempServer)
 					Log.Debugf("loaded server %s for bot %s", tempServer.ServerID, bot.BotName)
 				}
 			}
@@ -449,7 +457,7 @@ func createIfDoesntExist(name string) (err error) {
 	if _, err := os.Stat(name); err != nil {
 		// if file doesn't exist
 		if os.IsNotExist(err) {
-			// stat 
+			// stat
 			if _, err = os.Stat(name); err != nil {
 				if file == "" {
 					if err = os.Mkdir(p, 0755); err != nil {
@@ -468,7 +476,7 @@ func createIfDoesntExist(name string) (err error) {
 	return
 }
 
-func loadInitConfig(confDir, conf, verbose string) (botConfig parkertron, err error) {
+func LoadInitConfig(confDir, conf, verbose string) (botConfig Parkertron, err error) {
 	// All of this is pre-Logrus init
 	if verbose == "debug" {
 		log.Printf("Checking for dir at %s", confDir)

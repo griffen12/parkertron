@@ -12,6 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/parkervcp/parkertron/pkg/discord"
+	"github.com/parkervcp/parkertron/pkg/irc"
+
+	"github.com/parkervcp/parkertron/pkg/config"
+
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -29,16 +34,16 @@ var (
 	shutdown    = make(chan string)
 	servStopped = make(chan string)
 
-	botConfig parkertron
+	botConfig config.Parkertron
 
 	serviceStart = map[string]func(){
-		"discord": startDiscordsBots,
-		"irc":     startIRCBots,
+		"discord": discord.StartBots,
+		"irc":     irc.StartBots,
 	}
 
 	serviceStop = map[string]func(){
-		"discord": stopDiscordBots,
-		"irc":     stopIRCBots,
+		"discord": discord.StopBots,
+		"irc":     irc.StopBots,
 	}
 
 	// startup flag values
@@ -57,33 +62,6 @@ var (
 /_/ v.0.2.2`
 )
 
-type parkertron struct {
-	Services []string       `json:"services,omitempty"`
-	Log      logConf        `json:"log,omitempty"`
-	Database databaseConfig `json:"database,omitempty"`
-	Parsing  botParseConfig `json:"parsing,omitempty"`
-}
-
-type logConf struct {
-	Level    string `json:"level,omitempty"`
-	Location string `json:"location,omitempty"`
-}
-
-type databaseConfig struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	User     string `json:"user,omitempty"`
-	Pass     string `json:"pass,omitempty"`
-	Database string `json:"database,omitempty"`
-}
-
-type botParseConfig struct {
-	Reaction []string `json:"reaction,omitempty"`
-	Response []string `json:"response,omitempty"`
-	Max      int      `json:"max,omitempty"`
-	AllowIP  bool     `json:"allow_ip,omitempty"`
-}
-
 func init() {
 	flag.StringVarP(&verbose, "verbosity", "v", "info", "set the verbosity level for the bot {info,debug} (default is info)")
 	flag.StringVarP(&logDir, "logdir", "l", "logs/", "set the log directory of the bot. (default is ./logs/)")
@@ -96,7 +74,7 @@ func init() {
 		confDir = confDir + "/"
 	}
 
-	if newbot, err := loadInitConfig(confDir, conf, verbose); err != nil {
+	if newbot, err := config.LoadInitConfig(confDir, conf, verbose); err != nil {
 		log.Fatal(err)
 	} else {
 		if !flag.CommandLine.Changed(verbose) {
@@ -116,7 +94,7 @@ func init() {
 	Log = newLogger(logDir, verbose)
 	Log.Infof("logging online\n")
 
-	if err := initConfig(confDir); err != nil {
+	if err := config.InitConfig(confDir); err != nil {
 		Log.Panic(err)
 	}
 
@@ -130,11 +108,11 @@ func main() {
 		for _, service := range botConfig.Services {
 			switch service {
 			case "discord":
-				if err := createExampleDiscordConfig(confDir+"discord/"); err != nil {
+				if err := createExampleDiscordConfig(confDir + "discord/"); err != nil {
 					Log.Fatalf("%s", err)
 				}
 			case "irc":
-				if err := createExampleIRCConfig(confDir+"irc/"); err != nil {
+				if err := createExampleIRCConfig(confDir + "irc/"); err != nil {
 					Log.Fatalf("%s", err)
 				}
 			default:

@@ -1,4 +1,4 @@
-package main
+package discord
 
 // discord configs
 type discord struct {
@@ -15,15 +15,15 @@ type discordBot struct {
 type discordBotConfig struct {
 	Token  string        `json:"token,omitempty"`
 	Game   string        `json:"game,omitempty"`
-	DMResp responseArray `json:"dm_response,omitempty"`
+	DMResp ResponseArray `json:"dm_response,omitempty"`
 }
 
 type discordServer struct {
 	ServerID    string              `json:"server_id,omitempty"`
 	Config      discordServerConfig `json:"config,omitempty"`
-	ChanGroups  []channelGroup      `json:"channel_groups,omitempty"`
-	Permissions []permission        `json:"permissions,omitempty"`
-	Filters 	[]filter 			`json:"filters,omitempty"`
+	ChanGroups  []ChannelGroup      `json:"channel_groups,omitempty"`
+	Permissions []Permission        `json:"permissions,omitempty"`
+	Filters     []Filter            `json:"filters,omitempty"`
 }
 
 type discordServerConfig struct {
@@ -34,12 +34,4 @@ type discordServerConfig struct {
 
 type discordWebHooks struct {
 	Logs string `json:"logs,omitempty"`
-}
-
-type discordKickOnMention struct {
-	Roles   []string      `json:"roles,omitempty"`
-	Users   []string      `json:"users,omitempty"`
-	Direct  responseArray `json:"dm,omitempty"`
-	Channel responseArray `json:"channel,omitempty"`
-	Kick    bool          `json:"kick,omitempty"`
 }

@@ -1,4 +1,4 @@
-package main
+package irc
 
 // irc configs
 type irc struct {
@@ -6,15 +6,15 @@ type irc struct {
 }
 
 type ircBot struct {
-	BotName    string         `json:"bot_name,omitempty"`
-	Config     ircBotConfig   `json:"config,omitempty"`
-	ChanGroups []channelGroup `json:"channel_groups,omitempty"`
+	BotName    string              `json:"bot_name,omitempty"`
+	Config     ircBotConfig        `json:"config,omitempty"`
+	ChanGroups []main.channelGroup `json:"channel_groups,omitempty"`
 }
 
 type ircBotConfig struct {
-	Server ircServerConfig `json:"server,omitempty"`
-	DMResp responseArray   `json:"dm_response,omitempty"`
-	Prefix string          `json:"prefix,omitempty"`
+	Server ircServerConfig    `json:"server,omitempty"`
+	DMResp main.responseArray `json:"dm_response,omitempty"`
+	Prefix string             `json:"prefix,omitempty"`
 }
 
 type ircServerConfig struct {
