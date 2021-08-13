@@ -266,7 +266,7 @@ func discordMessageHandler(dg *discordgo.Session, m *discordgo.MessageCreate, bo
 				if len(urlResponse) == 1 && urlResponse[0] == "" || len(urlResponse) == 0 {
 
 				} else {
-					response = append(response, fmt.Sprintf("I have found the following for: <%s>", url))
+					response = append(response, fmt.Sprintf("Jeg har fundet følgende fra dette: <%s>", url))
 					for _, singleLine := range urlResponse {
 						response = append(response, singleLine)
 					}
